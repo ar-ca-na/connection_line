@@ -1,0 +1,75 @@
+--information:二つのオブジェクトをラインで繋ぎます。
+--track@layer1:対象レイヤー1,1,100,1,1
+--track@layer2:対象レイヤー2,1,100,2,1
+--track@width:太さ,1,500,10,1
+--color@line_color:ラインの色,0xFFFFFF
+--select@line_style:ラインの種類,実線=0,点線=1
+--track@dash_length:点線の長さ,1,200,20,1
+--track@gap_length:点線の間隔,1,200,10,1
+--track@offset_x1:始点オフセットX,-1000,1000,0,1
+--track@offset_y1:始点オフセットY,-1000,1000,0,1
+--track@offset_x2:終点オフセットX,-1000,1000,0,1
+--track@offset_y2:終点オフセットY,-1000,1000,0,1
+
+local l1 = math.floor(layer1)
+local l2 = math.floor(layer2)
+local base_x1 = obj.getvalue("layer"..l1..".x")
+local base_y1 = obj.getvalue("layer"..l1..".y")
+local base_x2 = obj.getvalue("layer"..l2..".x")
+local base_y2 = obj.getvalue("layer"..l2..".y")
+
+if base_x1 and base_y1 and base_x2 and base_y2 then
+    local x1 = base_x1 + offset_x1
+    local y1 = base_y1 + offset_y1
+    local x2 = base_x2 + offset_x2
+    local y2 = base_y2 + offset_y2
+    local dx = x2 - x1
+    local dy = y2 - y1
+    local distance = math.sqrt(dx*dx + dy*dy)
+
+    if distance > 0 then
+        local r,g,b = RGB(line_color)
+        local a = obj.alpha
+        local pr, pg, pb = (r / 255) * a, (g / 255) * a, (b / 255) * a
+        local half_width = width / 2
+        local p_x = -dy / distance
+        local p_y =  dx / distance
+        local u_x =  dx / distance
+        local u_y =  dy / distance
+        local all_polygons = {}
+
+        if line_style == 0 then
+            local v0x = x1 + p_x * half_width; local v0y = y1 + p_y * half_width
+            local v1x = x2 + p_x * half_width; local v1y = y2 + p_y * half_width
+            local v2x = x2 - p_x * half_width; local v2y = y2 - p_y * half_width
+            local v3x = x1 - p_x * half_width; local v3y = y1 - p_y * half_width
+            table.insert(all_polygons, {
+                v0x, v0y, 0,  v1x, v1y, 0,  v2x, v2y, 0,  v3x, v3y, 0,
+                pr,pg,pb,a,   pr,pg,pb,a,   pr,pg,pb,a,   pr,pg,pb,a
+            })
+        elseif line_style == 1 then
+            local current_dist = 0
+            while current_dist < distance do
+                local dash_start_x = x1 + current_dist * u_x
+                local dash_start_y = y1 + current_dist * u_y
+                local end_dist = math.min(current_dist + dash_length, distance)
+                local dash_end_x = x1 + end_dist * u_x
+                local dash_end_y = y1 + end_dist * u_y
+                local v0x = dash_start_x + p_x * half_width; local v0y = dash_start_y + p_y * half_width
+                local v1x = dash_end_x + p_x * half_width;   local v1y = dash_end_y + p_y * half_width
+                local v2x = dash_end_x - p_x * half_width;   local v2y = dash_end_y - p_y * half_width
+                local v3x = dash_start_x - p_x * half_width; local v3y = dash_start_y - p_y * half_width
+                table.insert(all_polygons, {
+                    v0x, v0y, 0,  v1x, v1y, 0,  v2x, v2y, 0,  v3x, v3y, 0,
+                    pr,pg,pb,a,   pr,pg,pb,a,   pr,pg,pb,a,   pr,pg,pb,a
+                })
+                current_dist = current_dist + dash_length + gap_length
+            end
+        end
+
+        if #all_polygons > 0 then
+            obj.drawpoly(all_polygons)
+        end
+    end
+end
+obj.alpha = 0
