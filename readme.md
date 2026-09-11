@@ -68,7 +68,7 @@ AviUtl ExEdit2（AviUtl2）。2.1.8 で動作を確認しています。
 
 ## ライセンス
 
-[MIT ライセンス](LICENSE)。商用・非商用を問わず自由に使えます。
+[MIT ライセンス](https://github.com/ar-ca-na/connection_line/blob/main/LICENSE)。商用・非商用を問わず自由に使えます。
 
 ## 作者
 
